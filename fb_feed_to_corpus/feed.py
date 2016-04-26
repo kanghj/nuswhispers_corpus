@@ -4,6 +4,15 @@ from collections import defaultdict
 
 with open('.config') as config_file:
     _ACCESS_TOKEN = json.load(config_file)['access_token']
+    if not _ACCESS_TOKEN:
+        raise ValueError('config file should be init with a user access token. '
+                         'Get one from https://developers.facebook.com/tools/explorer ?')
+
+    print("test if access token is valid")
+    _test_req = requests.get('https://graph.facebook.com/v2.2/me?access_token=%s' % (_ACCESS_TOKEN, ))
+    if _test_req.status_code != 200:
+        print _test_req
+        raise ValueError("Invalid access token? Get one from https://developers.facebook.com/tools/explorer " + str(_test_req.status_code) + ' received :' + _test_req.text)
 
 
 def post_contents(feed):
@@ -14,7 +23,6 @@ def post_contents_with_id(feed):
     result = defaultdict(lambda: "")
 
     for post in feed['data']:
-        print post
         try:
             result[post['id']] = post['message']
         except KeyError as e:
