@@ -11,7 +11,7 @@ with open('.config') as config_file:
     print("test if access token is valid")
     _test_req = requests.get('https://graph.facebook.com/v2.2/me?access_token=%s' % (_ACCESS_TOKEN, ))
     if _test_req.status_code != 200:
-        print _test_req
+        print(_test_req)
         raise ValueError("Invalid access token? Get one from https://developers.facebook.com/tools/explorer " + str(_test_req.status_code) + ' received :' + _test_req.text)
 
 

@@ -1,16 +1,15 @@
 import csv
+import scipy
 import numpy as np
 import lda
 import nltk
-from nltk.stem.wordnet import WordNetLemmatizer
 from nltk.corpus import stopwords
-
+from nltk.stem.wordnet import WordNetLemmatizer
 import textmining
 from collections import defaultdict
 
 import matplotlib.pyplot as plt
 
-from prepare_documents import nuswhispers_url_pattern
 
 def mean_len(rows):
     lengths = lengths_of_posts(rows)
@@ -31,23 +30,6 @@ def doc_term_matrix(docs):
     return tdm
 
 
-def lemmatised_sentences(docs):
-
-    lemmatizer = WordNetLemmatizer()
-    processed = []
-
-    for doc in docs:
-        tokens = nltk.tokenize.word_tokenize(doc)
-
-        processed.append(
-            ' '.join(
-                [lemmatizer.lemmatize(word) for word in tokens if
-                 word not in stopwords.words('english') and len(word) > 3]
-            )
-        )
-    return processed
-
-
 if __name__ == "__main__":
     import re
     with open('full.csv', 'rb') as opened:
@@ -58,40 +40,48 @@ if __name__ == "__main__":
         url_pattern = re.compile('http(s)?://.*\.com')
         num_pattern = re.compile('\d+')
         for row in reader:
-            row[1] = \
-                num_pattern.sub(
-                    '',
-                    url_pattern.sub(
-                        '',
-                        nuswhispers_url_pattern.sub(
-                            '',
-                            row[1].decode('utf-8').lower()
-                        )
-                    )
-                )
+            row[1] = row[1].decode('utf-8').lower() \
+                           .replace('http://www.nuswhispers.com/confession/', '') \
+                           .replace('https://www.nuswhispers.com/confession/', '') \
+                           .replace('www.nuswhispers.com/confession/', '')
+            row[1] = url_pattern.sub('', row[1])
+            row[1] = num_pattern.sub('', row[1])
             rows.append(row)
 
-    print('number of docs', len(rows))
+    print 'number of docs', len(rows)
 
     lengths = lengths_of_posts(rows)
     mean_length = mean_len(rows)
 
-    print('average length' , mean_len(rows))
-    print('stdev of length', np.std(lengths))
+    print 'average length' , mean_len(rows)
+    print 'stdev of length', np.std(lengths)
 
     docs = map(lambda x: x[1], rows)
-    processed = lemmatised_sentences(docs)
+    lemmatizer = WordNetLemmatizer()
+    processed = []
+    skipped = 0
+    for doc in docs:
+        tokens = nltk.tokenize.word_tokenize(doc)
 
+        processed.append(
+            ' '.join(
+                [lemmatizer.lemmatize(word) for word in tokens if word not in stopwords.words('english') and len(word) > 3]
+            )
+        )
+
+    print 'skipped ', skipped
+
+    print processed
     dtm = doc_term_matrix(processed).rows()
 
     headers = dtm.next()
-    print(headers)
+    print headers
 
     dtm = np.array(
         list(dtm)
     )
 
-    print(dtm.shape)
+    print dtm.shape
 
     num_topics = 4
     model = lda.LDA(n_topics=num_topics, n_iter=2500, random_state=1)
@@ -137,7 +127,6 @@ if __name__ == "__main__":
 
     plt.tight_layout()
     plt.show()
-    """
 
     f, ax = plt.subplots(5, 1, figsize=(8, 6), sharex=True)
     for i, k in enumerate([1, 3, 4, 8, 9]):
@@ -152,7 +141,7 @@ if __name__ == "__main__":
 
     plt.tight_layout()
     plt.show()
-
+    """
 
     topic_writers = []
     topic_files = []
