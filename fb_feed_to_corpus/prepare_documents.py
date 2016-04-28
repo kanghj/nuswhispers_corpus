@@ -13,6 +13,7 @@ if __name__ == "__main__":
     topic_readers = []
 
     topic_txts = []
+    topic_validation_txts = []
 
     for topic_filepath in topic_filepaths:
         f = open(topic_filepath, 'rb')
@@ -22,8 +23,13 @@ if __name__ == "__main__":
         )
 
         txt_filepath = topic_filepath.replace('.csv', '.txt')
-        f = open(txt_filepath, 'wb')
+        f = open(txt_filepath, 'w')
         topic_txts.append(f)
+
+        validation_filepath = txt_filepath.replace('.txt', '.validation')
+        f = open(validation_filepath, 'w')
+        topic_validation_txts.append(f)
+
 
     full_filepath = './full.csv'
 
@@ -44,16 +50,22 @@ if __name__ == "__main__":
             )
             print(sentence_map[id])
 
-    for topic_reader, topic_txt in izip(topic_readers, topic_txts):
-        for row in topic_reader:
+    for topic_reader, topic_txt, topic_validation_txt in izip(topic_readers, topic_txts, topic_validation_txts):
+        for i, row in enumerate(topic_reader):
+            is_validation = i % 5 == 0
+
             instance_id = row[0]
             sentence = sentence_map[instance_id]
 
-            topic_txt.write(sentence + '\n')
+            if is_validation:
+                topic_validation_txt.write(sentence + '\n')
+            else:
+                topic_txt.write(sentence + '\n')
 
-    for csv, txt in izip(topic_csvs, topic_txts):
+    for csv, txt, validation in izip(topic_csvs, topic_txts, topic_validation_txts):
         csv.close()
         txt.close()
+        validation.close()
 
 
 
